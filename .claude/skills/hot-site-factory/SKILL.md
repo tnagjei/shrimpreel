@@ -64,16 +64,35 @@ node scripts/site-state.mjs status --project <domain>
 
 P4 等待人工验收时，继续 P2/P3/P7 中不依赖最终规格的准备工作。不要把整个任务状态改成暂停。
 
+## 内部工作包
+
+具体合并边界、依赖和人工门见 [work packages](references/work-packages.md)。用户仍然只说“新建站”或“继续建站”，不需要知道工作包名称。
+
+本阶段固定以下工作包：
+
+| 工作包 | 包含内容 | 类型 |
+| --- | --- | --- |
+| P1 初始化 | 最新模板、独立仓库、A00/A01 | 顺序合并 |
+| P2 本地站点 | 站点骨架、A18 内容和 A27 技术 SEO | 强合并 |
+| P3 预发基础 | Cloudflare 资源、Google 登录、内容审核、Turnstile | 并行编排 |
+| P4 生成与素材 | A03/A04/A05/A19 生成链，A12/A23 公开素材 | 带人工门 |
+| P5 定价与支付测试 | A08、Waffo 或 Dodo 测试商品、A22 预发闭环 | 价格确定后合并；支付商分开 |
+| P6 正式发布 | A24 正式切站、A20 审核材料准备 | 只合并准备；提交和真实付款留门 |
+| P7 搜索与统计 | A28/A29/A30 搜索提交批次；A31/A32/A33/A35/A36 统计批次；A34 反馈 | 搜索和统计可批量；反馈独立 |
+| P8 上线体检 | `launch-audit` | 独立体检 |
+
 ## 阶段路由
 
 | 阶段 | 加载/执行 |
 | --- | --- |
 | P0 | 使用本 Skill 和 [state reference](references/state.md)；整理关键词与域名，不创建远程资源 |
-| P1 | 读取 [phase-1-repository.md](references/phase-1-repository.md)；先拉最新模板，再建独立仓库 |
-| P2 | 读取目标站点的 `.claude/skills/new-hot-site/SKILL.md`，不要在总控里复制它的步骤 |
-| P3 | 使用项目 README/Cloudflare 配置和现有 Wrangler 流程；有专用模块时再登记到本表 |
-| P5 | 使用项目支付文档及现有 Waffo/Dodo 脚本；有专用模块时再登记到本表 |
-| P7 | 目标站点已有 `connect-site-analytics` 时优先加载；否则按项目现有统计与搜索文档执行 |
+| P1 | 读取 [phase-1-repository.md](references/phase-1-repository.md)；先拉最新模板 fork，再建独立仓库 |
+| P2 | 读取 [work packages](references/work-packages.md) 和 `.claude/skills/new-hot-site/SKILL.md`；内容和 SEO 一次完成 |
+| P3 | 读取 [work packages](references/work-packages.md)；Cloudflare、Google、审核和 Turnstile 按分支并行 |
+| P4 | 读取 [work packages](references/work-packages.md)；先接通生成链，再停在样片/素材人工门 |
+| P5 | 读取 [work packages](references/work-packages.md) 和项目支付文档；Waffo/Dodo 不混用 |
+| P6 | 读取 [work packages](references/work-packages.md)；只自动准备发布和审核材料，提交前停下 |
+| P7 | 读取 [work packages](references/work-packages.md)；搜索提交和统计接入分别成批，反馈单独处理 |
 | P8 | 读取 `.claude/skills/launch-audit/SKILL.md` |
 
 模板同步是维护动作，不插入建站阶段；用户说“同步模板”时使用 `sync-upstream` skill。
