@@ -84,7 +84,7 @@ npm run dev -- --host 127.0.0.1      # http://127.0.0.1:3000
 
    积分包价格（`packages`）、订阅开关和套餐（`subscriptionsEnabled`、`plans`，开关设为 `false` 只卖积分包）、`durations`、`video.falModel` 按需在 `src/config/site.ts` 手改。套餐可加 `anchorPriceCents` 显示划线原价和折扣，只能填这个套餐真实卖过的价格（欧盟按降价前 30 天内最低价算），新站一般不填。价格页每个包显示“可做 N 条 X 秒或 M 条 Y 秒视频”（买得起的最长和最短时长），包数是 2 或 4 时网格按包数排列。可以加一个正好够最短时长的单条包（如 6 积分 $4.99）给只想做一条的人；余额不足时生成器的主按钮直接下单够用的最便宜的包，不用先跳价格页。
 3. **改文案**：`src/content/en.ts`、`src/content/zh.ts`。文案通过 `{keyword}` 等变量套用。每个词至少要重写 hero、whatIs、ideas、FAQ 和两篇文章，首页正文要自然覆盖长尾词。首页的痛点（`problem`）和对比（`withWithout`）区块按新趋势改，写不出真实内容就设为 `null`，不渲染。整站只换关键词会被 Google 判为 [scaled content abuse](https://developers.google.com/search/docs/essentials/spam-policies#scaled-content)。
-   - **文章**：在 `site.ts` 的 `articles` 加一项（`key`、`slug`、发布和更新日期，可选 `related`），再在每种语言的 `articles` 里补同名 key，缺了 typecheck 会报错。文章页地址是 `/<slug>`，自动进入 `/guides` 列表、sitemap 和其它文章的“相关文章”。`trend`、`howTo` 两篇被首页直接链接，不要删。建议每站至少一篇 1,200 词以上的支柱页，加 4–6 篇长尾页（教程、灵感、排错、对比）。
+   - **文章**：在 `site.ts` 的 `articles` 加一项（`key`、`slug`、发布和更新日期，可选 `related`），再在每种语言的 `articles` 里补同名 key，缺了 typecheck 会报错。可选的 `cover` 是 `public/` 下 1200×630 的封面，显示在 `/guides` 卡片和文章顶部，并用作该文章的 `og:image` 和 Article 结构化数据的 `image`；不填就没有卡片图，分享图用 `public/og.png`。封面用 `node scripts/article-cover.mjs public/guides/<slug>.jpg --tag Guide --title "短标题" public/demo/original.mp4@1 public/demo/ai1.mp4@2` 从站点自己的视频截帧（也可以用图片）生成，带标题、分类标签和品牌名；`--layout` 可选 `row`、`before-after`（照片 → 成片）、`vs`、`hero`、`grid`、`full`（一张横图铺满）。选项见脚本开头；用 Playwright 的 Chromium 渲染，截视频帧需要 ffmpeg。文章页地址是 `/<slug>`，自动进入 `/guides` 列表、sitemap 和其它文章的“相关文章”。`trend`、`howTo` 两篇被首页直接链接，不要删。建议每站至少一篇 1,200 词以上的支柱页，加 4–6 篇长尾页（教程、灵感、排错、对比）。
    - 文案按语言拆包，浏览器只下载当前语言（含法律页全文）。组件里照常用 `getContent(locale)`；只有在根路由之外、渲染之前要用文案时，才需要先 `await loadContent(locale)`。
    - 加一种语言：在 `site.ts` 的 `LOCALES` 和 `LOCALE_META` 里登记，新建 `src/content/<locale>.ts`（类型与 `en.ts` 一致），再在 `src/lib/i18n.ts` 的 `loaders` 里加一行动态 import。
 4. **换素材**：
@@ -229,6 +229,9 @@ SMOKE_BASE_URL=https://video-template-staging.<子域名>.workers.dev SMOKE_EXPE
 
 ## 关键设计
 
+- **主题**：`site.theme` 选整站外观，写在 `<html data-skin>` 上，访客仍可切换亮色 / 暗色。`classic`（默认）：暖白纸张、品红强调、衬线标题、胶囊按钮；`acid`：锌黑 / 奶白、黄绿强调、无衬线粗标题、小圆角按钮。颜色、字体、圆角都是 `src/styles.css` 里的 CSS 变量，新增主题时在 `src/lib/theme.ts` 登记并写亮色、暗色两组变量（`tests/unit/theme.test.ts` 核对）。
+  - 统计同意卡片（只在填了 `ga4Id` 时出现）在右下角，不挡正文；“接受”和“拒绝”同样大小，× 只收起本次，不记录选择。
+  - 页脚“问问 AI”：链接 `/llms.txt`，并列出 ChatGPT、Claude、Perplexity、Gemini（Google AI Mode）、Grok 按钮，带一段预填提问（`footer.askAiPrompt`，含首页和 `llms.txt` 地址）在新标签打开，链接 `nofollow`。
 - **积分**：每笔变动都写流水，`idempotency_key` 唯一（`order:<id>`、`order_refund:<id>`、`generation:<id>` 等），与批次、余额更新在同一个 D1 batch 里，重复入账会整体回滚。
   - 批次：每次入账是一个批次（`credit_grants`），可以带到期时间。买的积分永不过期；注册赠送按运营设置里的有效期到期（默认 `site.signupBonusValidDays`，0 = 永不过期）；后台补发时可填有效期（1–3650 天）。
   - 扣费先扣最早到期的批次，永不过期的最后扣，从哪些批次扣了多少记在 `credit_allocations`。分配在 SQL 里完成，余额不足时整个 batch 回滚，并发扣费不会超扣。生成失败按明细原路退回；退款回收时先扣该订单买的批次。
@@ -330,6 +333,7 @@ SMOKE_BASE_URL=https://video-template-staging.<子域名>.workers.dev SMOKE_EXPE
   - 配了站点密钥但没配 secret 时，两个表单返回 503，不会静默放行。
 - **统计与 Cookie**：在 `site.analytics` 配置，隐私政策的“Cookie 与统计”一节会按配置自动调整。
   - 推荐只填 `cfBeaconToken`（Cloudflare Web Analytics）：不写 Cookie，不需要同意横幅。
+  - Umami（可选）：填 `analytics.umamiWebsiteId` 和 `vars.UMAMI_ORIGIN`（实例地址，如 `https://umami.example.com`）。页面加载本站的 `/s/script.js`，上报到本站的 `/s/api/send`，由 Worker（`src/server/umami.ts`）代理，网页源码和 JS 里看不到实例域名。不写 Cookie，不受同意横幅控制；代理不转发 Cookie，访客 IP（`CF-Connecting-IP`）只用于判断国家和统计独立访客。只有 `APP_ENV=production` 才上报；本地 dev、e2e、staging 拿到的是空脚本，什么都不转发。`/admin` 后台页面不上报。
   - 填了 `ga4Id` 才启用 GA4，同时出现同意横幅和页脚 “Cookie settings”。采用 Consent Mode v2 basic 模式：访客接受前不加载 gtag.js，事件只进 `dataLayer`；广告类同意项始终为 denied。拒绝或撤回时删除 `_ga`、`_ga_*`、`_gid`（当前主机和各级父域）。选择存在 `localStorage` 的 `consent.analytics`，逻辑见 `src/lib/consent.ts`。
   - 来源归因写第一方 Cookie `vt_attr`（90 天）。填了 `ga4Id` 时它和 GA4 一样等访客接受后才写入：接受时补记本次访问的来源，拒绝或撤回时删除；没写 Cookie 的访客，注册和订单记为 direct，访问统计照常计数。没填 `ga4Id` 时没有横幅，`vt_attr` 直接写入；按欧盟 ePrivacy 的严格解释这也需要事先同意，主要面向欧盟用户时应启用横幅。逻辑见 `src/lib/attribution.ts`。
 - **导出我的数据**（GDPR 第 15、20 条）：个人中心设置页可下载 JSON（`GET /api/account/export`），包含账号、会话、订单、积分流水与批次、上传与生成记录、留言、本人提交的举报和发信记录；按用户限流。不含 R2 路径、服务商请求 ID、内部错误信息和成本，也不含他人针对本人视频的举报。媒体文件不打包，仍在保留期内的可从个人中心下载。字段清单见 `src/server/account-export.ts`。

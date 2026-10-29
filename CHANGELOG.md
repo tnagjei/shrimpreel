@@ -4,6 +4,65 @@ Notable changes to the template. Derived sites pick them up with `git merge` fro
 
 中文说明在每条下方。
 
+## 2026-10-27
+
+### Changed: article covers get a headline, a tag and layouts
+
+- **`scripts/article-cover.mjs`** now renders the cover as HTML in Playwright's Chromium (already installed for e2e) instead of an ffmpeg filter graph. New options: `--title` (headline), `--tag` (category pill), `--note` (one small line), `--labels "A|B"`, `--accent`, and `--layout`: `row` (1–3 frames fanned, the default), `before-after` (photo → video with an arrow), `vs` (split screen), `hero` (one large frame), `grid` (2–4 frames), `full` (one wide image such as an illustration). The brand name comes from `site.brandName` of the repo you run it in. Without `--title` it only lays out the frames. ffmpeg is still needed to grab video frames.
+- The template's sample cover is regenerated with a headline.
+
+Upgrading a site: merge upstream. Existing covers keep working; regenerate them with `--title`, `--tag` and a layout per article type if you want the new look. No vars, secrets or migrations.
+
+调整：文章封面加标题、分类标签和版式。`scripts/article-cover.mjs` 改为用 Playwright 的 Chromium（e2e 已经装好）渲染 HTML 再截图，不再拼 ffmpeg 滤镜。新增选项：`--title`（标题）、`--tag`（分类标签）、`--note`（一行小字）、`--labels "A|B"`、`--accent`，以及 `--layout`：`row`（1–3 帧扇形排开，默认）、`before-after`（照片 → 成片，中间箭头）、`vs`（左右分屏）、`hero`（一帧大图）、`grid`（2–4 帧）、`full`（一张横图铺满，如插画）。品牌名取运行目录的 `site.brandName`。不带 `--title` 时只排画面。截视频帧仍需要 ffmpeg。模板示例封面已按新样式重新生成。站点升级：合并 upstream；已有封面照常可用，想换新样式就按文章类型选版式，加 `--title`、`--tag` 重新生成。没有新增 vars、密钥和迁移。
+
+## 2026-10-26
+
+### Added: optional article covers
+
+- **`cover`** on `site.articles[]` (`src/config/site.ts`): a 1200×630 image under `public/`. When set it shows on the `/guides` card (and related-guide cards) and at the top of the article, and becomes that article's `og:image` / `twitter:image` and Article JSON-LD `image`. Without it nothing changes. The template's `trend` article ships with `/guides/neon-shuffle-ai-trend.jpg`.
+- **`scripts/article-cover.mjs`** builds a cover from 1–3 frames of the site's own videos on a blurred background: `node scripts/article-cover.mjs public/guides/<slug>.jpg public/demo/original.mp4@1 public/demo/ai1.mp4@2` (needs ffmpeg).
+- `npm run seo:check` no longer counts `alt=""` (decorative images) as a missing alt.
+
+Upgrading a site: merge upstream. Covers are optional; to add them, generate one per article and set `cover: '/guides/<slug>.jpg'`. If the merge brings in `public/guides/neon-shuffle-ai-trend.jpg` and no article uses it, delete it. No vars, secrets or migrations.
+
+新增：可选的文章封面。`site.articles[]` 的 `cover` 是 `public/` 下 1200×630 的图片，填了就显示在 `/guides` 卡片（含“相关指南”卡片）和文章顶部，并用作该文章的 `og:image` / `twitter:image` 和 Article 结构化数据的 `image`；不填和以前一样。模板的 `trend` 文章带了示例封面 `/guides/neon-shuffle-ai-trend.jpg`。`scripts/article-cover.mjs` 从站点自己的视频截 1–3 帧、铺在模糊背景上生成封面（需要 ffmpeg）。`npm run seo:check` 不再把 `alt=""`（装饰图）算成缺少 alt。站点升级：合并 upstream；封面可选，要加就每篇生成一张并填 `cover: '/guides/<slug>.jpg'`；合并带进来的 `public/guides/neon-shuffle-ai-trend.jpg` 没有文章用就删掉。没有新增 vars、密钥和迁移。
+
+### Fixed: `/s/script.js` returns an empty script outside production
+
+- With Umami configured, local dev, e2e and staging no longer fetch the tracker from the instance: `/s/script.js` returns an empty JavaScript file when `APP_ENV` is not `production`. Before, a local Worker that could not reach the instance answered 502 `text/plain`, the browser logged errors on every page, and the "home page hydrates without errors" e2e case failed. Nothing was reported from these environments either way.
+
+Upgrading a site: merge upstream. Nothing to configure; production is unchanged.
+
+修复：非 production 环境的 `/s/script.js` 返回空脚本。配了 Umami 的站点，本地 dev、e2e 和 staging 不再去实例取跟踪脚本，`APP_ENV` 不是 `production` 时直接返回一个空 JS。之前本地 Worker 连不上实例时返回 502 和 `text/plain`，每个页面控制台报错，e2e“首页水合无报错”失败；这些环境本来就不上报。站点升级：合并 upstream，无需配置，生产不变。
+
+### Added: a second theme (`acid`), a corner consent card and "Ask AI" in the footer
+
+- **`site.theme`** (`src/config/site.ts`): `'classic'` (the current look) or `'acid'` (zinc black / cream, lime accent, bold sans headings, small radii). It is set on `<html data-skin>`; light / dark still follows the visitor. Colors, the heading font, radii, the primary button, the footer and the logo tile are CSS variables in `src/styles.css`; themes are listed in `src/lib/theme.ts`. The footer, language links and logo no longer hard-code colors.
+- The consent banner is now a small card in the bottom-right corner (full width at the bottom on phones) with a × that hides it for this page view without saving a choice. "Accept" and "Reject" stay the same size.
+- The footer gets an "AI & agent docs" row: a link to `/llms.txt` and ChatGPT, Claude, Perplexity, Gemini (Google AI Mode) and Grok buttons that open a pre-filled question about the site in a new tab (`rel="noopener nofollow"`).
+
+Upgrading a site: merge upstream. `src/config/site.ts` needs `theme` (keep `'classic' as ThemeName` for the current look; the import is `import type { ThemeName } from '#/lib/theme'`). `src/content/en.ts` and `zh.ts` need `consent.dismiss` and `footer.agentDocs`, `footer.askAi`, `footer.askAiLabel`, `footer.askAiPrompt` (copy them from the template; `npm run typecheck` lists what is missing). The shorter `consent.body` is optional. No vars, secrets or migrations.
+
+新增：第二套主题 `acid`、右下角同意卡片和页脚“问问 AI”。`site.theme` 可选 `'classic'`（现有外观）或 `'acid'`（锌黑 / 奶白、黄绿强调、无衬线粗标题、小圆角），写在 `<html data-skin>` 上，亮色 / 暗色仍由访客切换；颜色、标题字体、圆角、主按钮、页脚和 Logo 底色都是 `src/styles.css` 里的 CSS 变量，主题列表在 `src/lib/theme.ts`；页脚、语言链接和 Logo 不再写死颜色。同意横幅改成右下角小卡片（手机上贴底铺满），× 只收起本次、不记录选择，“接受”和“拒绝”仍同样大小。页脚新增“AI 与 Agent 文档”一行：`/llms.txt` 链接，以及 ChatGPT、Claude、Perplexity、Gemini（Google AI Mode）、Grok 按钮，在新标签打开一段预填的提问（`rel="noopener nofollow"`）。站点升级：合并 upstream；`src/config/site.ts` 要有 `theme`（保持现有外观填 `'classic' as ThemeName`，并加 `import type { ThemeName } from '#/lib/theme'`）；`src/content/en.ts`、`zh.ts` 要补 `consent.dismiss` 和 `footer.agentDocs`、`footer.askAi`、`footer.askAiLabel`、`footer.askAiPrompt`（从模板复制，缺哪个 `npm run typecheck` 会列出），缩短后的 `consent.body` 可选。没有新增 vars、密钥和迁移。
+
+### Fixed: Umami only counts production visitors
+
+- `/s/api/send` now forwards events only when `APP_ENV` is `production`; local dev, e2e and staging get `{"disabled":true}` (the tracker stops for that page) and nothing reaches the instance. Sites share their `vars` with local dev, so before this a local run or e2e pass with Umami enabled reported to the live instance.
+- Events whose `url` is under `/admin` are dropped (`{}`), so admin views, with order and user IDs in their paths, no longer show up in analytics.
+
+Upgrading a site: merge upstream and deploy. Nothing to configure. Events already recorded from `127.0.0.1` or `/admin` stay in Umami; delete them there if needed.
+
+修复：Umami 只统计正式环境。`/s/api/send` 只在 `APP_ENV` 为 `production` 时转发，本地 dev、e2e、staging 返回 `{"disabled":true}`（跟踪脚本在本页停止上报），不会到达实例；站点的 `vars` 本地和生产共用，之前开了 Umami 的站点本地跑 dev 或 e2e 会报进正式实例。`url` 在 `/admin` 下的事件直接丢弃（返回 `{}`），后台页面（路径里有订单号、用户 ID）不再进统计。站点升级：合并 upstream 后部署，无需配置。已经记录的 `127.0.0.1` 或 `/admin` 数据留在 Umami 里，需要时在那边删除。
+
+### Added: optional Umami analytics through a same-origin proxy
+
+- **`analytics.umamiWebsiteId`** (`src/config/site.ts`, empty by default): when set, every page loads `/s/script.js` (with `data-website-id`). Umami sets no cookies, so the consent banner does not gate it. The privacy policy adapts (the "no third-party analytics" sentence is dropped, a cookie-free Umami sentence is added, and the service-provider sentence mentions analytics). `new-site.mjs` clears the ID for a new site.
+- **`UMAMI_ORIGIN`** (plain var in `wrangler.jsonc` / `wrangler.staging.jsonc`, empty by default): the Umami instance, an https origin without a path. It is only read by the Worker (`src/server/umami.ts`), never bundled into the frontend, so the instance's domain is not visible in page source or JS. The Worker serves `GET|HEAD /s/script.js` (cached for a day) and `POST /s/api/send`: the body is capped at 16 KB and must be a JSON object with an object `payload`; `CF-Connecting-IP` is written to `payload.ip` so Umami counts country and unique visitors by the real visitor; only `Content-Type`, `User-Agent` and `x-umami-cache` go upstream (never cookies); only status, body and `Content-Type` come back; upstream errors or a 5 s timeout return 502 without the origin. Empty `UMAMI_ORIGIN` gives 404. `npm run doctor` warns when it is not a path-less https origin. CSP is unchanged.
+
+Upgrading a site (only if you want Umami): merge upstream, set `analytics.umamiWebsiteId` in `src/config/site.ts` and `UMAMI_ORIGIN` in `wrangler.jsonc` `vars`, then deploy. No secrets or migrations. The Umami instance must ship the GeoLite2 database (on Vercel set `BUILD_GEO=1` and redeploy): with `payload.ip` set, Umami looks up the country itself and returns 500 without it.
+
+新增：可选的 Umami 统计，经站点自己域名的同域代理接入。`analytics.umamiWebsiteId`（`site.ts`，默认空）填了就在所有页面加载 `/s/script.js`；Umami 不写 Cookie，不受同意横幅控制，隐私政策按配置调整。`UMAMI_ORIGIN`（`wrangler.jsonc` 和 `wrangler.staging.jsonc` 的普通 var，默认空）是实例地址（不带路径的 https origin），只在 Worker（`src/server/umami.ts`）里使用，不进前端 bundle，网页源码和 JS 里看不到实例域名。Worker 提供 `GET|HEAD /s/script.js`（缓存一天）和 `POST /s/api/send`：body 上限 16 KB，必须是带对象 `payload` 的 JSON；把 `CF-Connecting-IP` 写进 `payload.ip`，让 Umami 按真实访客统计国家和独立访客；上游只带 `Content-Type`、`User-Agent`、`x-umami-cache`（绝不带 Cookie），响应只回状态码、body 和 `Content-Type`；上游出错或 5 秒超时返回 502，且不含实例地址。`UMAMI_ORIGIN` 为空时返回 404；格式不对时 `npm run doctor` 警告；CSP 不变。站点升级（想用 Umami 才需要）：合并 upstream 后，在 `src/config/site.ts` 填 `analytics.umamiWebsiteId`，在 `wrangler.jsonc` 的 `vars` 填 `UMAMI_ORIGIN`，部署。没有新增密钥和迁移。Umami 实例要带 GeoLite2 数据库（Vercel 上设 `BUILD_GEO=1` 后重新部署）：带了 `payload.ip` 时 Umami 自己查国家，没有数据库会返回 500。
+
 ## 2026-10-25
 
 ### Added: optional Resend channel for transactional email
