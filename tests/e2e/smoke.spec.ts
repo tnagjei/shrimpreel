@@ -31,10 +31,11 @@ test('新用户：登录 → 购买 → 生成 → 个人中心看到视频与�
   await shot('03-checkout-paid')
 
   await page.goto('/')
-  // 按钮出现 = 已水合且会话加载完；之前的输入事件 React 接收不到
+  // 余额条出现 = 已水合且会话加载完；默认时长可能比套餐积分贵，先明确选 short
+  await expect(page.getByTestId('generator-balance')).toBeVisible()
+  await page.getByTestId('duration-short').click()
   await expect(page.getByTestId('generate')).toBeVisible()
   await page.getByTestId('photo-input').setInputFiles(PHOTO)
-  await page.getByTestId('duration-short').click()
   await page.getByTestId('consent').check()
   await expect(page.getByTestId('generate')).toBeEnabled()
   await page.getByTestId('generate').click()

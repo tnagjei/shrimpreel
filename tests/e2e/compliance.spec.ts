@@ -79,7 +79,9 @@ test('举报下架：匿名在 /report 举报 → 管理员下架 → 同一原�
   // 被举报用户：同一张图上传两次各生成一条，另一张图生成一条
   const ownerEmail = uniqueEmail('reported')
   await devLogin(page.request, ownerEmail)
-  await buyPackage(page.request, 'starter')
+  // starter 的积分可能不够三条 short，按实际配置买够
+  expect(STARTER).toBeGreaterThan(0)
+  for (let i = 0; i < Math.ceil((SHORT * 3) / STARTER); i += 1) await buyPackage(page.request, 'starter')
   const photo = uniquePhoto()
   const [first, second, unrelated] = [await upload(page.request, photo), await upload(page.request, photo), await upload(page.request, uniquePhoto())]
   const reported = await generate(page.request, first)
