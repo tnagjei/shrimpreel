@@ -62,6 +62,8 @@ Each keyword site is its own repository that tracks this template as `upstream`,
 
 With Claude Code, once the site repo exists (step 1) you can just say "new hot site: Moon Hop, the moon-jump dance on TikTok". The bundled `new-hot-site` skill (`.claude/skills/new-hot-site/`) covers steps 2–4 and the local part of step 7: it writes a site brief, runs the scaffolder, sets pricing, rewrites the copy in both languages, generates placeholder media, then runs typecheck, tests, build, seo:check and an offline doctor. It only touches per-site files and never commits or deploys. Missing information (final domain, licensed media, etc.) is left as `TODO(site): …` comments; `npm run doctor` lists them and blocks a production deploy (`APP_ENV=production`) while any remain.
 
+To start from zero, say "new site: keyword=Moon Hop, domain=moonhop.ai". The `hot-site-factory` skill checks that your template fork includes the latest upstream, creates an independent site repository from your fork with `upstream` intact, then hands off to the local site scaffold. The controller therefore travels with the new site. After that, say "continue building", "show progress" or "pause building"; state is kept locally under `~/.codex/site-builds/`, so you do not need to remember sub-skill names between sessions.
+
 1. **Create the site repo**
    ```bash
    git clone https://github.com/qianshuixia/shrimpreel.git moonhop && cd moonhop
@@ -433,8 +435,8 @@ src/server/             API: auth, credits, orders, payments/, video/, jobs (que
 migrations/             D1 migrations
 containers/postprocess/ post-processing container: burned-in watermark, C2PA signing, cover and preview (experimental, not wired into the Worker yet; see ROADMAP)
 seed/templates/         source videos for generation
-.claude/skills/         Claude Code skills: new-hot-site (launch a keyword site), sync-upstream (merge template updates), launch-audit (launch checks)
-scripts/                new-site, doctor (pre-deploy checks), sync-plan (template sync plan), sync-secrets (secret sync), seo-check, indexnow, waffo-setup, dodo-setup, stripe-setup, webhook-proxy, seed-local, placeholder media
+.claude/skills/         Claude Code skills: hot-site-factory (single entry and resume), new-hot-site (local keyword site), sync-upstream (merge template updates), launch-audit (launch checks)
+scripts/                site-state (build progress ledger), new-site, doctor (pre-deploy checks), sync-plan (template sync plan), sync-secrets (secret sync), seo-check, indexnow, waffo-setup, dodo-setup, stripe-setup, webhook-proxy, seed-local, placeholder media
 tests/                  unit, e2e (mock providers), smoke (post-deploy), sandbox (payment provider test mode)
 ```
 

@@ -18,4 +18,5 @@ playwright-report/
 !.claude/skills/new-hot-site/
 !.claude/skills/sync-upstream/
 !.claude/skills/launch-audit/
+!.claude/skills/hot-site-factory/
 *.local.md

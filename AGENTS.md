@@ -8,7 +8,7 @@
   - 这份清单还写在 `scripts/sync-plan.mjs` 的 `layerOf`（同步计划按它分层，`tests/unit/sync-plan.test.ts` 核对）和 new-hot-site skill 的白名单里，改动时三处一起改。
   - 站点只能用 `git merge` 同步模板（`sync-upstream` skill），同步基线取 `git merge-base`；合并提交带 `Template-sync: <sha>` trailer。
 - 代码注释、docs 用简体中文；commit message 用英文。
-- 在站点仓库上新词按 `.claude/skills/new-hot-site/SKILL.md` 做。缺的信息写成 `TODO(site): …`，只能放在 `src/config/site.ts`、`src/content/*.ts`、`wrangler.jsonc` 里（`scripts/doctor.mjs` 只扫这些文件，正式环境报错）。
+- 从零建站按 `.claude/skills/hot-site-factory/SKILL.md` 做；它负责模板最新版、独立仓库、状态恢复和阶段路由。站点仓库已建立后的本地新站内容按 `.claude/skills/new-hot-site/SKILL.md` 做。缺的信息写成 `TODO(site): …`，只能放在 `src/config/site.ts`、`src/content/*.ts`、`wrangler.jsonc` 里（`scripts/doctor.mjs` 只扫这些文件，正式环境报错）。
 - `.claude/` 默认不入库，只放行项目自己的 skill。新增 skill 时在 `.gitignore` 里给它的目录加一行 `!.claude/skills/<name>/`。
 
 ## 积分与支付

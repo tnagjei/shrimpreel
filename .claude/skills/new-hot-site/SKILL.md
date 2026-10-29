@@ -9,6 +9,8 @@ description: 在 ShrimpReel 派生出的站点仓库里，把一句话热词需�
 
 ## 前提（不满足就停下说明）
 
+如果用户是从零开始并同时给了关键词和域名，先使用 `hot-site-factory` 完成模板更新、独立仓库和站点初始化，再回到本 Skill。
+
 1. 当前目录是站点仓库，不是模板本身：`git remote -v` 里有 `upstream` 指向模板。只有 `origin` 指向 `qianshuixia/shrimpreel` 时，先让用户按 README“上新词流程”第 1 步建站点仓库。
 2. 工作区干净（`git status --short` 为空），这样最后能用 `git diff --stat` 给出完整改动。
 3. 已 `npm install`。

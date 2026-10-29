@@ -62,6 +62,8 @@ npm run dev -- --host 127.0.0.1      # http://127.0.0.1:3000
 
 用 Claude Code 时，建好站点仓库（第 1 步）后可以直接说“上新词：Moon Hop，TikTok 上的月球跳舞”。仓库自带的 `new-hot-site` skill（`.claude/skills/new-hot-site/`）会完成第 2–4 步和第 7 步的本地部分：整理站点简介、跑脚手架、改定价、重写两种语言的文案、生成占位素材，再跑 typecheck、test、build、seo:check 和离线 doctor。它只改站点差异文件，不提交、不部署。缺的信息（正式域名、授权素材等）写成 `TODO(site): …` 注释，`npm run doctor` 会列出来，正式站（`APP_ENV=production`）还有没填的就拦下部署。
 
+如果是从零建站，直接说“新建站：关键词=Moon Hop，域名=moonhop.ai”。`hot-site-factory` skill 会先确认模板 fork 已包含原作者最新版，再从你的 fork 建立独立站点仓库并保留 upstream，这样总控 Skill 也会进入新站。以后只需要说“继续建站”“看进度”或“暂停建站”。状态保存在本机 `~/.codex/site-builds/`，跨天恢复不需要记 Skill 名称。
+
 1. **建站点仓库**：
    ```bash
    git clone https://github.com/qianshuixia/shrimpreel.git moonhop && cd moonhop
@@ -433,8 +435,8 @@ src/server/             API：auth、credits、orders、payments/、video/、job
 migrations/             D1 迁移
 containers/postprocess/ 成片后处理容器：烧录水印、C2PA 签名、封面和预览（实验阶段，Worker 尚未接入，见 ROADMAP）
 seed/templates/         生成用的模板源视频
-.claude/skills/         Claude Code skill：new-hot-site（上新词）、sync-upstream（合并模板更新）、launch-audit（上线体检）
-scripts/                new-site（上新词）、doctor（部署前体检）、sync-plan（模板同步计划）、sync-secrets（密钥同步）、seo-check、indexnow、waffo-setup、dodo-setup、stripe-setup、webhook-proxy、seed-local、占位素材生成
+.claude/skills/         Claude Code skill：hot-site-factory（建站总控与恢复）、new-hot-site（本地新站）、sync-upstream（合并模板更新）、launch-audit（上线体检）
+scripts/                site-state（建站进度账本）、new-site（上新词）、doctor（部署前体检）、sync-plan（模板同步计划）、sync-secrets（密钥同步）、seo-check、indexnow、waffo-setup、dodo-setup、stripe-setup、webhook-proxy、seed-local、占位素材生成
 tests/                  unit（单元）、e2e（mock 服务商）、smoke（部署后巡检）、sandbox（支付商 test 模式）
 ```
 
